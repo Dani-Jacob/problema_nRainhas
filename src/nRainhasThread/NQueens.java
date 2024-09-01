@@ -8,13 +8,13 @@ import java.util.concurrent.Executors;
 public class NQueens {
 
 	private int N;							 // Tamanho do tabuleiro (N x N)
-	private int solutionCount;				 //Contador de solucoes encontradas
-	private boolean printSolutions; 		 // Diz se é necessario printar/armazenar todas as solucoes
-	private StringBuilder sb;				 // Armazena os outputs
-	private int MAX_OUTPUT = 10000; 		 // Tamanho max do pacote de armazenamento de solucoes para o print
-    private String FILE_NAME = "output.txt"; //Nome do arquivo de saida
+	private int solutionCount;				 // Contador de soluções encontradas
+	private boolean printSolutions; 		 // Indica se é necessário printar/armazenar todas as soluções
+	private StringBuilder sb;				 // Armazena as soluções para printar/salvar em lote
+	private int MAX_OUTPUT = 10000; 		 // Número máximo de soluções armazenadas antes de salvar no arquivo
+    private String FILE_NAME = "output.txt"; // Nome do arquivo de saída
 
-	//Construtor
+	// Construtor para inicializar a classe com o tamanho do tabuleiro e se deve printar as soluções
 	public NQueens(int N, boolean printSolutions) {
 		this.N = N;
 		this.solutionCount = 0;
@@ -22,14 +22,16 @@ public class NQueens {
 		this.sb = new StringBuilder();
 	}
 
-	//Getter
+	// Getter para obter o número total de soluções encontradas
 	public int getSolutionCount() {
 		return this.solutionCount;
 	}
 
-	//Metodo publico onde iniciasse a resolucao do problema
+	// Método público para iniciar a resolução do problema N-Rainhas
 	public boolean solve() {
+		// Limpa o arquivo de saída antes de começar a resolver o problema
 		cleanOutput();
+	    
 	    // Cria um ExecutorService com um pool de threads fixo de tamanho N
 	    ExecutorService executor = Executors.newFixedThreadPool(N);
 	    
@@ -44,10 +46,10 @@ public class NQueens {
 	        executor.execute(new NQueensTask(this, N, 0, col, columns, diag1, diag2));
 	    }
 
-	    // Encerra o ExecutorService, não aceita novas tarefas, mas continua com as atuais
+	    // Encerra o ExecutorService, não aceita novas tarefas, mas continua executando as atuais
 	    executor.shutdown();
 	    
-	    // Aguarda a conclusão de todas as threads
+	    // Aguarda a conclusão de todas as threads antes de continuar
 	    while (!executor.isTerminated()) {
 	    }
 
@@ -55,33 +57,35 @@ public class NQueens {
 	    return solutionCount > 0;
 	}
 
-	//Metodo para incrementar a variavel contadora de solucoes
+	// Método sincronizado para incrementar a variável contadora de soluções
 	public synchronized void incrementSolutionCount() {
 		solutionCount++;
 	}
 
-	//Metodo para adicionar a solucao encontrada na variavel
+	// Método sincronizado para adicionar a solução encontrada à StringBuilder
 	public synchronized void pushSolution(int[] board) {	
+			// Adiciona a solução ao StringBuilder
 			sb.append(solutionCount + " - Solução encontrada:\n");
 			for (int i = 0; i < N; i++) {
 				for (int j = 0; j < N; j++) {
 					if (board[i] == j) {
-						sb.append(" Q ");
+						sb.append(" Q "); // Representa uma rainha
 					} else {
-						sb.append(" . ");
+						sb.append(" . "); // Representa uma célula vazia
 					}
 				}
 				sb.append("\n");
 			}
 			sb.append("\n");
-			 //Caso tenha antingido o limite estabelecido de solucoes adicionadas na variavel, salva e reinicia a variavel
+			
+			// Se o número de soluções acumuladas atingir o limite, salva no arquivo e limpa o StringBuilder
 			if (solutionCount % MAX_OUTPUT == 0) {
 				saveAllSolutions();
 				sb.setLength(0);
 			}
 	}
 
-	//Metodo para salvar todos as solucoes da variavel no arquivo de saida
+	// Método para salvar todas as soluções armazenadas no StringBuilder no arquivo de saída
 	public void saveAllSolutions() {   
         try (
             FileWriter fileWriter = new FileWriter(FILE_NAME, true);
@@ -91,17 +95,16 @@ public class NQueens {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
 	}
 
-	//Metodo para buscar possiveis solucoes para o problema
+	// Método recursivo para buscar possíveis soluções para o problema N-Rainhas
 	public void solve(int row, int[] board, boolean[] columns, boolean[] diag1, boolean[] diag2) {
-	    //Todas as rainhas ja foram colocadas
+	    // Caso base: todas as rainhas já foram posicionadas, solução completa
 	    if (row == N) {
-	    	incrementSolutionCount();
+	    	incrementSolutionCount(); // Incrementa o contador de soluções
 			if (printSolutions) {
-	        // Armazena a solução encontrada
-	        pushSolution(board);
+	        	// Armazena a solução encontrada
+	        	pushSolution(board);
 			}
 	        return;
 	    }
@@ -127,20 +130,20 @@ public class NQueens {
 	    }
 	}
 
-    //Metodo privado para verificar se a posicao da rainha a ser inserida no tabuleiro é segura
+    // Método privado para verificar se a posição da rainha a ser inserida no tabuleiro é segura
 	private boolean isSafe(int row, int col, boolean[] columns, boolean[] diag1, boolean[] diag2) {
+		// Verifica se a coluna e as diagonais não estão ocupadas
 		return !columns[col] && !diag1[row - col + N - 1] && !diag2[row + col];
 	}
 	
-    //Metodo privado para limpar o arquivo de saida
+    // Método privado para limpar o arquivo de saída antes de começar a resolver o problema
     private void cleanOutput() {
 	        try {
-	            new FileWriter(FILE_NAME, false).close();;
+	            // Cria um novo FileWriter com o parâmetro false para limpar o arquivo
+	            new FileWriter(FILE_NAME, false).close();
 	        } catch (Exception e) {
 	            e.printStackTrace();
 	        }
     }
 	
 }
-
-
